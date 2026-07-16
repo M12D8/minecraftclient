@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "espmod",
+  "version": "${version}",
+  "name": "ESP Mod",
+  "description": "Advanced ESP client with in-game HUD",
+  "authors": [
+    "You"
+  ],
+  "contact": {
+    "homepage": "https://example.com"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "com.espmod.ESPModClient"
+    ]
+  },
+  "mixins": [
+    "espmod.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.0",
+    "fabric-api": "*",
+    "minecraft": "~1.21"
+  }
+}
