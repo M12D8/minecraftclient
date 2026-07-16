@@ -1,0 +1,70 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+.gradletasknamecache
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.swn
+*.iml
+*.ipr
+*.iws
+.classpath
+.project
+.settings/
+.c9/
+*.launch
+.factorypath
+
+# OS
+.DS_Store
+Thumbs.db
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+
+# Minecraft
+run/
+runs/
+.minecraft/
+*.jar.json
+
+# Source Control
+.git/
+
+
+# Build artifacts
+out/
+*.class
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+
+# Local JDK installs (too large for GitHub)
+fabric-mod/java21/
+fabric-mod/oracleJdk-26/
+cpp-system/oracleJdk-26/
+fabric-mod/gradle-8.7/
+fabric-mod/gradle-8.9/
+fabric-mod/gradle-8.10/
+fabric-mod/gradle-8.11/
+fabric-mod/*.zip
+*.dll
+*.exe
+
+# Visual Studio
+.vs/
+
+# Misc
+*.log
+*.pid
+*.seed
+*.pid.lock
