@@ -4,25 +4,24 @@ import com.espmod.ESPModClient;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 
-/**
- * HUD Renderer - Vape v4 style in-game GUI
- */
 public class HudRenderer {
 
     private static final MinecraftClient client = MinecraftClient.getInstance();
 
-    // Vape v4 color scheme
-    private static final int PANEL_BG     = 0xCC121212;
-    private static final int HEADER_BG    = 0xFF1A1A1A;
-    private static final int ACCENT       = 0xFF3E80FF;
-    private static final int TEXT_WHITE   = 0xFFFFFFFF;
-    private static final int TEXT_GRAY    = 0xFF6E6E73;
-    private static final int SEPARATOR    = 0xFF262626;
+    // Vape v4 colors
+    private static final int PANEL_BG   = 0xCC0D0D0D;
+    private static final int HEADER_BG  = 0xFF161616;
+    private static final int ACCENT     = 0xFF3E80FF;
+    private static final int TEXT_ON    = 0xFFFFFFFF;
+    private static final int TEXT_OFF   = 0xFF6E6E73;
+    private static final int SEPARATOR  = 0xFF222222;
 
-    private static final int PANEL_WIDTH   = 200;
-    private static final int HEADER_HEIGHT = 20;
-    private static final int ROW_HEIGHT    = 18;
-    private static final int PADDING       = 8;
+    // Compact Vape-style sizing
+    private static final int PANEL_W   = 110;
+    private static final int HEADER_H  = 14;
+    private static final int ROW_H     = 14;
+    private static final int PAD       = 5;
+    private static final int GAP       = 5; // gap between panels
 
     private static class Panel {
         String title;
@@ -42,93 +41,95 @@ public class HudRenderer {
     private static Panel[] panels;
 
     public static void init() {
+        int x = 5;
         panels = new Panel[]{
-            new Panel("COMBAT",   10,  10, new String[]{"Kill Aura"}),
-            new Panel("VISUAL",  220,  10, new String[]{"ESP"}),
-            new Panel("MOVEMENT",430,  10, new String[]{"Auto Sprint"})
+            new Panel("COMBAT",   x,                           5, new String[]{"Kill Aura"}),
+            new Panel("VISUAL",   x + (PANEL_W + GAP),         5, new String[]{"ESP"}),
+            new Panel("MOVEMENT", x + (PANEL_W + GAP) * 2,    5, new String[]{"Auto Sprint"})
         };
     }
 
-    public static void render(DrawContext context, float tickDelta) {
+    public static void render(DrawContext ctx, float tickDelta) {
         if (!ESPModClient.menuOpen) return;
+        syncStates();
+        for (Panel p : panels) drawPanel(ctx, p);
+    }
 
-        syncFeatureStates();
+    public static void handleClick() {
+        if (client.getWindow() == null) return;
+        double scale = client.getWindow().getScaleFactor();
+        int mx = (int)(client.mouse.getX() / scale);
+        int my = (int)(client.mouse.getY() / scale);
 
-        for (Panel panel : panels) {
-            drawPanel(context, panel);
+        for (int pi = 0; pi < panels.length; pi++) {
+            Panel p = panels[pi];
+            for (int fi = 0; fi < p.features.length; fi++) {
+                int fy = p.y + HEADER_H + fi * ROW_H;
+                if (mx >= p.x && mx < p.x + PANEL_W && my >= fy && my < fy + ROW_H) {
+                    if (pi == 0 && fi == 0) ESPModClient.toggleKillAura();
+                    if (pi == 1 && fi == 0) ESPModClient.toggleESP();
+                    if (pi == 2 && fi == 0) ESPModClient.toggleAutoSprint();
+                }
+            }
         }
     }
 
-    private static void drawPanel(DrawContext context, Panel panel) {
-        int panelHeight = HEADER_HEIGHT + (panel.features.length * ROW_HEIGHT);
+    private static void drawPanel(DrawContext ctx, Panel p) {
+        int totalH = HEADER_H + p.features.length * ROW_H;
 
         // Background
-        context.fill(panel.x, panel.y + HEADER_HEIGHT,
-                     panel.x + PANEL_WIDTH, panel.y + panelHeight, PANEL_BG);
+        ctx.fill(p.x, p.y + HEADER_H, p.x + PANEL_W, p.y + totalH, PANEL_BG);
 
         // Header
-        context.fill(panel.x, panel.y,
-                     panel.x + PANEL_WIDTH, panel.y + HEADER_HEIGHT, HEADER_BG);
-        context.fill(panel.x, panel.y + HEADER_HEIGHT - 1,
-                     panel.x + PANEL_WIDTH, panel.y + HEADER_HEIGHT, SEPARATOR);
+        ctx.fill(p.x, p.y, p.x + PANEL_W, p.y + HEADER_H, HEADER_BG);
 
-        // Header title
-        context.drawText(client.textRenderer, panel.title,
-                         panel.x + PADDING, panel.y + 6, 0xFFB9B9C0, false);
+        // Top accent line
+        ctx.fill(p.x, p.y, p.x + PANEL_W, p.y + 1, ACCENT);
 
-        // Left + top accent border
-        context.fill(panel.x, panel.y, panel.x + 1, panel.y + panelHeight, ACCENT);
-        context.fill(panel.x, panel.y, panel.x + PANEL_WIDTH, panel.y + 1, ACCENT);
+        // Left accent bar
+        ctx.fill(p.x, p.y, p.x + 1, p.y + totalH, ACCENT);
+
+        // Header text
+        ctx.drawText(client.textRenderer, p.title, p.x + PAD, p.y + 3, TEXT_ON, false);
 
         // Feature rows
-        for (int i = 0; i < panel.features.length; i++) {
-            int featureY = panel.y + HEADER_HEIGHT + (i * ROW_HEIGHT);
-            drawFeature(context, panel, i, featureY);
+        for (int i = 0; i < p.features.length; i++) {
+            int fy = p.y + HEADER_H + i * ROW_H;
+            drawFeature(ctx, p, i, fy);
         }
     }
 
-    private static void drawFeature(DrawContext context, Panel panel, int idx, int y) {
-        boolean enabled = panel.enabled[idx];
-        String  name    = panel.features[idx];
+    private static void drawFeature(DrawContext ctx, Panel p, int idx, int y) {
+        boolean on   = p.enabled[idx];
+        String  name = p.features[idx];
 
-        // Mouse hover detection (GUI coordinates)
-        double scale  = client.getWindow().getScaleFactor();
-        int mouseX = (int)(client.mouse.getX() / scale);
-        int mouseY = (int)(client.mouse.getY() / scale);
-        boolean hovering = mouseX >= panel.x && mouseX < panel.x + PANEL_WIDTH
-                        && mouseY >= y        && mouseY < y + ROW_HEIGHT;
+        double scale = client.getWindow().getScaleFactor();
+        int mx = (int)(client.mouse.getX() / scale);
+        int my = (int)(client.mouse.getY() / scale);
+        boolean hover = mx >= p.x && mx < p.x + PANEL_W && my >= y && my < y + ROW_H;
 
-        if (hovering) {
-            context.fill(panel.x, y, panel.x + PANEL_WIDTH, y + ROW_HEIGHT, 0x331E1E1E);
-        }
+        // Hover highlight
+        if (hover) ctx.fill(p.x + 1, y, p.x + PANEL_W, y + ROW_H, 0x221E1E1E);
 
-        // Blue left bar when enabled
-        if (enabled) {
-            context.fill(panel.x, y, panel.x + 2, y + ROW_HEIGHT, ACCENT);
-        }
+        // Enabled: blue left bar
+        if (on) ctx.fill(p.x + 1, y, p.x + 3, y + ROW_H, ACCENT);
 
         // Separator
-        if (idx < panel.features.length - 1) {
-            context.fill(panel.x, y + ROW_HEIGHT - 1,
-                         panel.x + PANEL_WIDTH, y + ROW_HEIGHT, SEPARATOR);
-        }
+        if (idx < p.features.length - 1)
+            ctx.fill(p.x + 1, y + ROW_H - 1, p.x + PANEL_W, y + ROW_H, SEPARATOR);
 
-        // Feature name
-        context.drawText(client.textRenderer, name,
-                         panel.x + PADDING, y + 4,
-                         enabled ? TEXT_WHITE : TEXT_GRAY, false);
+        // Feature text
+        ctx.drawText(client.textRenderer, name,
+                     p.x + PAD + 2, y + 3,
+                     on ? TEXT_ON : TEXT_OFF, false);
 
         // Checkbox
-        int cx = panel.x + PANEL_WIDTH - 20;
-        int cy = y + 3;
-        int cs = 12;
-        context.fill(cx, cy, cx + cs, cy + cs, 0xFF1A1A1A);
-        if (enabled) {
-            context.fill(cx + 2, cy + 2, cx + cs - 2, cy + cs - 2, ACCENT);
-        }
+        int cx = p.x + PANEL_W - 14, cy = y + 2, cs = 10;
+        ctx.fill(cx, cy, cx + cs, cy + cs, 0xFF111111);
+        if (on) ctx.fill(cx + 2, cy + 2, cx + cs - 2, cy + cs - 2, ACCENT);
     }
 
-    private static void syncFeatureStates() {
+    private static void syncStates() {
         if (panels == null) return;
         panels[0].enabled[0] = ESPModClient.isKillAuraEnabled();
         panels[1].enabled[0] = ESPModClient.isESPEnabled();

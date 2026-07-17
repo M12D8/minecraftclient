@@ -1,12 +1,11 @@
 package com.espmod;
 
+import com.espmod.ui.HudRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import org.lwjgl.glfw.GLFW;
-
 import net.minecraft.client.MinecraftClient;
-import com.espmod.ui.HudRenderer;
 
 public class ESPModClient implements ClientModInitializer {
 
@@ -14,43 +13,44 @@ public class ESPModClient implements ClientModInitializer {
 
     public static volatile boolean menuOpen = false;
 
-    // Feature states
-    public static volatile boolean killAura = false;
-    public static volatile boolean esp = false;
+    public static volatile boolean killAura   = false;
+    public static volatile boolean esp        = false;
     public static volatile boolean autoSprint = false;
 
-    private static boolean lastInsertPressed = false;
+    private static boolean lastInsert     = false;
+    private static boolean lastLeftClick  = false;
 
     @Override
     public void onInitializeClient() {
-        System.out.println("[ESP Mod] Initializing client...");
-
         HudRenderer.init();
 
-        // In Fabric API for 1.21, HudRenderCallback passes (DrawContext, RenderTickCounter)
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
             HudRenderer.render(drawContext, 1.0f);
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(c -> handleInput());
-
-        System.out.println("[ESP Mod] Client initialized!");
     }
 
     private void handleInput() {
         if (client.getWindow() == null) return;
+        long win = client.getWindow().getHandle();
 
-        long handle = client.getWindow().getHandle();
-
-        int insertState = GLFW.glfwGetKey(handle, GLFW.GLFW_KEY_INSERT);
-        if (insertState == GLFW.GLFW_PRESS) {
-            if (!lastInsertPressed) {
-                menuOpen = !menuOpen;
-                System.out.println("[ESP Mod] Menu: " + (menuOpen ? "OPEN" : "CLOSED"));
-            }
-            lastInsertPressed = true;
+        // INSERT — toggle menu
+        int ins = GLFW.glfwGetKey(win, GLFW.GLFW_KEY_INSERT);
+        if (ins == GLFW.GLFW_PRESS) {
+            if (!lastInsert) menuOpen = !menuOpen;
+            lastInsert = true;
         } else {
-            lastInsertPressed = false;
+            lastInsert = false;
+        }
+
+        // Left click — toggle features when menu is open
+        int lmb = GLFW.glfwGetMouseButton(win, GLFW.GLFW_MOUSE_BUTTON_LEFT);
+        if (lmb == GLFW.GLFW_PRESS) {
+            if (!lastLeftClick && menuOpen) HudRenderer.handleClick();
+            lastLeftClick = true;
+        } else {
+            lastLeftClick = false;
         }
     }
 
