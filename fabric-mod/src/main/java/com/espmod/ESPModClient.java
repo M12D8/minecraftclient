@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import org.lwjgl.glfw.GLFW;
 
 import net.minecraft.client.MinecraftClient;
+import com.espmod.ui.HudRenderer;
 
 public class ESPModClient implements ClientModInitializer {
 
@@ -28,7 +29,7 @@ public class ESPModClient implements ClientModInitializer {
 
         // In Fabric API for 1.21, HudRenderCallback passes (DrawContext, RenderTickCounter)
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
-            HudRenderer.render(drawContext, tickCounter.getTickDelta(true));
+            HudRenderer.render(drawContext, 1.0f);
         });
 
         ClientTickEvents.END_CLIENT_TICK.register(c -> handleInput());
