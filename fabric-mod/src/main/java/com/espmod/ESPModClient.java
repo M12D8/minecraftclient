@@ -17,14 +17,16 @@ public class ESPModClient implements ClientModInitializer {
     public static volatile boolean esp        = false;
     public static volatile boolean autoSprint = false;
 
-    private static boolean lastInsert     = false;
-    private static boolean lastLeftClick  = false;
+    private static boolean lastInsert    = false;
+    private static boolean lastLeftClick = false;
 
     @Override
     public void onInitializeClient() {
         HudRenderer.init();
 
         HudRenderCallback.EVENT.register((drawContext, tickCounter) -> {
+            // Keep cursor unlocked every frame while menu is open
+            if (menuOpen) client.mouse.unlockCursor();
             HudRenderer.render(drawContext, 1.0f);
         });
 
@@ -35,10 +37,14 @@ public class ESPModClient implements ClientModInitializer {
         if (client.getWindow() == null) return;
         long win = client.getWindow().getHandle();
 
-        // INSERT — toggle menu
+        // INSERT — toggle menu open/close
         int ins = GLFW.glfwGetKey(win, GLFW.GLFW_KEY_INSERT);
         if (ins == GLFW.GLFW_PRESS) {
-            if (!lastInsert) menuOpen = !menuOpen;
+            if (!lastInsert) {
+                menuOpen = !menuOpen;
+                // Lock cursor back when closing menu
+                if (!menuOpen) client.mouse.lockCursor();
+            }
             lastInsert = true;
         } else {
             lastInsert = false;

@@ -17,11 +17,11 @@ public class HudRenderer {
     private static final int SEPARATOR  = 0xFF222222;
 
     // Compact Vape-style sizing
-    private static final int PANEL_W   = 110;
-    private static final int HEADER_H  = 14;
-    private static final int ROW_H     = 14;
-    private static final int PAD       = 5;
-    private static final int GAP       = 5; // gap between panels
+    private static final int PANEL_W   = 85;
+    private static final int HEADER_H  = 12;
+    private static final int ROW_H     = 12;
+    private static final int PAD       = 4;
+    private static final int GAP       = 4;
 
     private static class Panel {
         String title;
